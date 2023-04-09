@@ -1,8 +1,11 @@
 const http = require("http");
 const fs = require("fs");
 
+const Port = 1025;
+const Ip = "127.0.0.1";
+
 const sendResponse = (filename,statusCode,response) => {
-    fs.readFile(`./html/${filename}`,(error,data)=>{
+    fs.readFile(`./html/${filename}.html`,(error,data)=>{
         if (error) {
             response.statusCode = 500;
             response.setHeader("Content-Type", "text/plain");
@@ -16,28 +19,39 @@ const sendResponse = (filename,statusCode,response) => {
 };
 
 const server = http.createServer((request,response)=>{
-    console.log(request.url,request.method);
+    //console.log(request.url,request.method);
     const method = request.method;
-    const url = request.url;
+    let url = request.url;
+    //const urlpathName = request.url.urlpathName;
 
     if(method === "GET"){
-     if(url==="/"){
-        sendResponse("index.html",200,response);
-     } 
-     else if (url==="/about.html"){
-        sendResponse("about.html",200,response);
-     } 
-     else {
-        sendResponse("404.html",404,response);
-     }
+        const requestUrl = new URL(url,`http://${Ip}:${Port}`);
+        url = requestUrl.pathname;
+        console.log(url);
+        console.log(requestUrl);
+        const lang = requestUrl.searchParams.get("lang");
+        let selector;
+
+        if (lang===null || lang === "en") {
+            selector="";
+        }else if (lang === "zh"){
+            selector="-zh";
+    } else {
+      selector = "";
+        }
+
+        if(url==="/"){
+            sendResponse(`index${selector}`,200,response);
+        } else if (url==="/about"){
+            sendResponse(`about${selector}`,200,response);
+        } else {
+            sendResponse(`404${selector}`,404,response);
+        }
     } 
     else {
 
     };
 });
-
-const Port = 1025;
-const Ip = "127.0.0.1";
 
 server.listen(Port,Ip,()=>{
     console.log(`Server is running at http://${Ip}:${Port}`);
